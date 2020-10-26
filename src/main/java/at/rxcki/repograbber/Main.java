@@ -1,6 +1,8 @@
 package at.rxcki.repograbber;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -12,18 +14,19 @@ import java.util.Base64;
 import java.util.List;
 
 public class Main {
+    private static final Logger LOGGER = LogManager.getLogger(Main.class.getClassLoader());
 
     static File mainFile = new File("Projects");
 
     public static void main(String[] args) throws IOException, InterruptedException {
         mainFile.mkdir();
 
-        String projectsRaw = get("https://DOMAIN/rest/api/1.0/projects");
-        System.out.println(projectsRaw);
+        String projectsRaw = get("https://bitbucket.icevizion.de/rest/api/1.0/projects");
+        LOGGER.info(projectsRaw);
 
         Document projects = Document.parse(projectsRaw);
         for (Document project : ((List<Document>) projects.get("values"))) {
-            System.out.println(project.get("key"));
+            LOGGER.info(project.get("key"));
             File projectFile = new File(mainFile.getAbsolutePath() + "/" + project.get("name"));
             projectFile.mkdir();
 
@@ -34,7 +37,7 @@ public class Main {
                 repoFile.mkdir();
 
                 String cloneUrl = (String) ((List<Document>) ((Document) repo.get("links")).get("clone")).get(0).get("href");
-                System.out.println(cloneUrl);
+                LOGGER.info(cloneUrl);
 
                 ProcessBuilder builder = new ProcessBuilder("git", "clone", cloneUrl, repoFile.getAbsolutePath());
                 builder.directory(repoFile);
