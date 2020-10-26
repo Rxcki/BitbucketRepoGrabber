@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,11 +37,12 @@ public class Main {
         }
 
         String projectsRaw = get(properties.get("url")+"/rest/api/1.0/projects");
-        LOGGER.info(projectsRaw);
 
         Document projects = Document.parse(projectsRaw);
+        LOGGER.info("Retrieved "+((List<Document>) projects.get("values")).size()+" Projects");
+
         for (Document project : ((List<Document>) projects.get("values"))) {
-            LOGGER.info(project.get("key"));
+            LOGGER.info("Working on project "+project.get("key")+"...");
             File projectFile = new File(PROJECTS.getAbsolutePath() + "/" + project.get("name"));
             projectFile.mkdir();
 
@@ -53,13 +53,14 @@ public class Main {
                 repoFile.mkdir();
 
                 String cloneUrl = (String) ((List<Document>) ((Document) repo.get("links")).get("clone")).get(0).get("href");
-                LOGGER.info(cloneUrl);
 
+                LOGGER.info("Cloning Repository "+repo.get("name")+"...");
                 ProcessBuilder builder = new ProcessBuilder("git", "clone", cloneUrl, repoFile.getAbsolutePath());
                 builder.directory(repoFile);
                 builder.inheritIO();
                 builder.start().waitFor();
 
+                LOGGER.info("Fetching additional branches for "+repo.get("name")+"...");
                 String branchesRaw = get(properties.get("url")+"/rest/api/1.0/projects/"+project.get("key")+"/repos/"+repo.getString("slug")+"/branches");
                 Document branches = Document.parse(branchesRaw);
                 for (Document branch : ((List<Document>) branches.get("values"))) {
@@ -69,6 +70,7 @@ public class Main {
                     builder.start().waitFor();
                 }
             }
+            LOGGER.info("Finished Project "+project.get("key")+"!");
         }
     }
 
