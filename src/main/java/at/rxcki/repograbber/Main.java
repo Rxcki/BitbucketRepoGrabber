@@ -28,7 +28,14 @@ public class Main {
         if (properties == null)
             return; //Can't start without the config
 
-        PROJECTS.mkdir();
+        if (!PROJECTS.exists()) {
+            PROJECTS.mkdir();
+            LOGGER.info("Created empty Projects directory");
+        }
+        if (PROJECTS.listFiles().length > 0) {
+            LOGGER.warn("Projects directory is not empty! Stopping to avoid overwrite");
+            return;
+        }
 
         String projectsRaw = get(properties.get("url")+"/rest/api/1.0/projects");
         LOGGER.info(projectsRaw);
